@@ -23,22 +23,26 @@ def train(m, data, epochs=20):
   opt = torch.optim.Adam(m.parameters())
 
   for epoch in range(epochs):
-    tot_loss = 0
+    num_samples = 0
+    tot_rec_loss, tot_kl_loss = 0, 0
     for x, _ in data:
       x = x.to(device)
       opt.zero_grad()
 
       x_rec = m(x)
       
-      loss = ( (x - x_rec) ** 2 ).mean() + m.encoder.kl
+      rec_loss = ( (x - x_rec) ** 2 ).sum()
+      kl_loss = m.encoder.kl
+      loss = rec_loss + kl_loss
+      
       loss.backward()
       opt.step()
 
-      tot_loss += loss.detach().clone()
+      tot_rec_loss += rec_loss.detach().clone()
+      tot_kl_loss += kl_loss.detach().clone()
+      num_samples += x.shape[0]
 
-
-    av_loss = tot_loss / ( len(data) * data.batch_size )
-    print(f'Epoch {epoch + 1} completed - average loss: {av_loss}')
+    print(f'Epoch {epoch + 1} - rec_loss: {tot_rec_loss / num_samples} - kl_loss: {tot_kl_loss / num_samples}')
 
   return m
 
@@ -73,7 +77,7 @@ def main():
   summary(ae, tuple(data_shape))
 
   # Train model
-  ae = train(ae, data, epochs=20)
+  ae = train(ae, data, epochs=40)
 
   # Plot latent space
   plot_latent(ae, data, num_batches=100)

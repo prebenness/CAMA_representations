@@ -11,12 +11,13 @@ class VariationalEncoder(nn.Module):
 
     self.in_dims = in_dims
     self.latent_dim = latent_dim
-
     self.hdim = hdim
+
     self.linear1 = nn.Linear(in_features=reduce(lambda a, b: a * b, self.in_dims), out_features=self.hdim)
     self.linear2a = nn.Linear(in_features=self.hdim, out_features=self.latent_dim)
     self.linear2b = nn.Linear(in_features=self.hdim, out_features=self.latent_dim)
 
+    # Sample from Normal on GPU
     self.N = torch.distributions.Normal(0, 1)
     self.N.loc = self.N.loc.cuda()
     self.N.scale = self.N.scale.cuda()
@@ -32,7 +33,12 @@ class VariationalEncoder(nn.Module):
 
     z = mu + sigma * self.N.sample(mu.shape)
 
-    self.kl = (sigma ** 2 + mu ** 2 - torch.log(sigma) - 1/2).sum()
+    self.kl = (
+      ( sigma ** 2 ) / 2 + 
+      ( mu ** 2 ) / 2 - 
+      torch.log(sigma) - 
+      1 / 2
+    ).sum()
 
     return z
 
