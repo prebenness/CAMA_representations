@@ -4,3 +4,5 @@ data
 toy_vae/output
 venv
 results
+logs
+sbatch_scripts
