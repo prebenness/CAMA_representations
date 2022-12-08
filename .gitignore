@@ -3,3 +3,4 @@ data
 .vscode
 toy_vae/output
 venv
+results
