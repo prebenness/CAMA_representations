@@ -34,7 +34,7 @@ def get_data(hor_shift=0, ver_shift=0):
   return data
 
 
-def train(model, clean_data, pert_data, num_epochs=10, lambd=0.7):
+def train(model, clean_data, pert_data, num_epochs=10, lambd=0.7, beta=1.0):
 
   opt = torch.optim.Adam(model.parameters())
 
@@ -61,12 +61,12 @@ def train(model, clean_data, pert_data, num_epochs=10, lambd=0.7):
       # Clean data
       x_rec_clean = model(x_clean, y_clean)
       rec_loss_clean = 0.5 * ( (x_clean - x_rec_clean) ** 2 ).sum()
-      kl_loss_clean = model.encoder.qz.kl
+      kl_loss_clean = beta * model.encoder.qz.kl
 
       # Perturbed data
       x_rec_pert = model(x_pert, y_pert, infer_m=True)
       rec_loss_pert = 0.5 * ( (x_pert - x_rec_pert) ** 2).sum()
-      kl_loss_pert = model.encoder.qz.kl + model.encoder.qm.kl
+      kl_loss_pert = beta * (model.encoder.qz.kl + model.encoder.qm.kl)
 
       # Tally losses
       loss_clean = rec_loss_clean + kl_loss_clean
@@ -177,18 +177,18 @@ def save(model, name='model'):
 def main():
   # Set parameters of experiment
   dim_y, dim_z, dim_m = 10, 64, 32
-  num_epochs = 50
+  num_epochs = 250
 
   clean_data = get_data()
-  hor_shifted_data = get_data(hor_shift=0.5)
-  ver_shifted_data = get_data(ver_shift=0.5)
+  hor_shifted_data = get_data(hor_shift=0.01)
+  ver_shifted_data = get_data(ver_shift=0.01)
 
   model = CAMA(dim_y=dim_y, dim_z=dim_z, dim_m=dim_m,
                out_shape=(1, 28, 28), device=DEVICE).to(DEVICE)
 
   # Train loop
   train(model, clean_data=clean_data, pert_data=hor_shifted_data,
-        num_epochs=num_epochs, lambd=0.8)
+        num_epochs=num_epochs, lambd=0.8, beta=10.0)
 
   # Eval model
   eval(model, clean_data)
