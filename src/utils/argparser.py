@@ -53,9 +53,15 @@ def update_config(args):
         cfg.OUT_SHAPE = (3, 32, 32)
 
     # Overwrite defaults if cmd args given
+    cfg.HOR_SHIFT = args.hor_shift or cfg.HOR_SHIFT
+    cfg.VER_SHIFT = args.ver_shift or cfg.VER_SHIFT
     cfg.DEBUG = args.debug or cfg.DEBUG
+
+    # Train args
     cfg.BETA = args.beta or cfg.BETA
     cfg.LAMBDA = args.lambda_ or cfg.LAMBDA
+    cfg.NUM_EPOCHS = args.num_epochs or cfg.NUM_EPOCHS
+    cfg.BATCH_SIZE = args.batch_size or cfg.BATCH_SIZE
 
 
 def parse_args():
