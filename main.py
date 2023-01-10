@@ -18,16 +18,17 @@ def main():
 
     # Define model
     model_class = CAMA(dim_y=cfg.DIM_Y, dim_z=cfg.DIM_Z,
-                       dim_m=cfg.DIM_M, out_shape=cfg.OUT_SHAPE)
+                       dim_m=cfg.DIM_M, out_shape=cfg.OUT_SHAPE).to(cfg.DEVICE)
 
     if args.mode == 'train':
-        clean_data, pert_data = get_data()
-        model = train_model(model_class, clean_data, pert_data)
+        train_loader, test_loader, train_loader_pert, \
+            test_loader_pert = get_data()
+        model = train_model(model_class, train_loader, train_loader_pert)
         save_model(model, name='test')
 
     elif args.mode == 'finetune':
         model = load_model(model_class, args.trained_model)
-        eval_model(model, clean_data)
+        eval_model(model, test_loader)
 
     elif args.mode == 'test':
         ...

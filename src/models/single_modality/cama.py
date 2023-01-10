@@ -51,7 +51,7 @@ class CAMA(nn.Module):
         # Estimate p(y|x)
         # Reconstruction probability p(x | y_c, z_k, m)
         p_x = 0.5 * ((self.decoder(y_rep, z_k, m) - x_rep)
-                     ** 2).sum(dim=(-1, -2))
+                     ** 2).sum(dim=(-1, -2, -3)).reshape((-1, 1))
 
         # Uniform prior class probability p(y_c)
         p_y = (torch.ones((x_rep.shape[0], 1)) * (1 / self.dim_y)).to(x.device)

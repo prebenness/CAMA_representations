@@ -2,12 +2,26 @@
 Model training scripts
 '''
 
+import os
+
 import torch
 import torch.nn.functional as F
+from torchvision.utils import save_image
 
 from src.scripts.eval_performance import eval_model
-
 import src.utils.config as cfg
+from src.utils.data import standardise, unstandardise
+
+
+def store_recons(x, x_rec, epoch):
+    '''
+    Store reconstruction of random image
+    '''
+    x = unstandardise(x[32].detach().cpu())
+    x_rec = unstandardise(x_rec[32].detach().cpu())
+
+    out_path = os.path.join('logs', f'epoch-{epoch}-img.png')
+    save_image([x, x_rec], out_path)
 
 
 def train_model(model, clean_data, pert_data):
@@ -25,11 +39,11 @@ def train_model(model, clean_data, pert_data):
 
         for (x_clean, y_clean), (x_pert, y_pert) in zip(clean_data, pert_data):
             # Format data and send to GPU
-            x_clean = x_clean.to(cfg.DEVICE)
+            x_clean = standardise(x_clean).to(cfg.DEVICE)
             y_clean = y_clean.to(cfg.DEVICE)
             y_clean = F.one_hot(y_clean).type(torch.float32)
 
-            x_pert = x_pert.to(cfg.DEVICE)
+            x_pert = standardise(x_pert).to(cfg.DEVICE)
             y_pert = y_pert.to(cfg.DEVICE)
             y_pert = F.one_hot(y_pert).type(torch.float32)
 
@@ -69,7 +83,7 @@ def train_model(model, clean_data, pert_data):
                 print('DEBUG set to True breaking training after one batch!')
                 break
 
-        # Average loss weighted by cfg.LAMBDAa
+        # Average loss weighted by cfg.LAMBDA
         tot_loss = cfg.LAMBDA * (tot_rec_loss_clean + tot_kl_loss_clean) \
             + (1 - cfg.LAMBDA) * (tot_rec_loss_pert + tot_kl_loss_pert)
         tot_samples = (cfg.LAMBDA * num_samples_clean +
@@ -92,4 +106,8 @@ def train_model(model, clean_data, pert_data):
 
         print(result_text)
 
-        return model
+        # DEBUG reconstruction
+        # Display some random images
+        store_recons(x_clean, x_rec_clean, epoch=epoch+1)
+
+    return model

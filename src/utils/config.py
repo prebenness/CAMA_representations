@@ -19,6 +19,8 @@ OUT_SHAPE = (1, 28, 28)
 DIM_Y = 10
 DIM_Z = 64
 DIM_M = 32
+MEAN = None
+STD = None
 
 # Training
 NUM_EPOCHS = 50

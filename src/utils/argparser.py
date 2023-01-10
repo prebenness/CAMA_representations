@@ -52,13 +52,10 @@ def update_config(args):
         cfg.DIM_M = 32
         cfg.OUT_SHAPE = (3, 32, 32)
 
-    # Store rest
-    cfg.DEBUG = args.debug
-    cfg.BETA = args.beta
-    cfg.LAMBDA = args.lambda_
-
-    if args.debug:
-        cfg.DEBUG = True
+    # Overwrite defaults if cmd args given
+    cfg.DEBUG = args.debug or cfg.DEBUG
+    cfg.BETA = args.beta or cfg.BETA
+    cfg.LAMBDA = args.lambda_ or cfg.LAMBDA
 
 
 def parse_args():
