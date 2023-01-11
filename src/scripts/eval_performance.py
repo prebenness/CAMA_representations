@@ -22,15 +22,15 @@ def eval_model(model, data, verbose=True):
         for x, y in data:
             x = standardise(x).to(cfg.DEVICE)
             y = y.to(cfg.DEVICE)
-            y = F.one_hot(y).type(torch.float32)
+            y = F.one_hot(y, num_classes=cfg.DIM_Y).type(torch.float32)
 
-            # Follow NIST convention and clamp values in range #
+            # Follow NIST convention and clamp values in range
             # 0.000000001 to 0.999999999
             y_pred = model.predict(x)                       # p(y|x)
-            y_pred = y_pred.clamp(min=1e-9, max=1-1e-9)     # p(y|x) as logit
-            y_pred = torch.log(y_pred / (1 - y_pred))
+            y_pred = y_pred.clamp(min=1e-9, max=1-1e-9)
+            y_pred = torch.log(y_pred / (1 - y_pred))       # p(y|x) as logit
 
-            y_av = torch.ones(y.shape) / y.shape[-1]        # p(y)
+            y_av = torch.ones(y.shape) / y.shape[-1]            # p(y)
             y_av = torch.log(y_av / (1 - y_av)).to(cfg.DEVICE)  # p(y) as logit
 
             xe_loss += F.cross_entropy(y_pred, y, reduction='sum')

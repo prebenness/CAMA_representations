@@ -33,6 +33,10 @@ class CAMA(nn.Module):
         return x_recon
 
     def predict(self, x):
+        '''
+        Approximates p(y|x) and returns probability distribution over
+        classes as float64 tensor
+        '''
         # Copy x to get all possible class assignments for each sample
         # -> [x_1, x_2, ..., x_128, x_1, x_2, ...]
         x_rep = x.repeat(self.dim_y, 1, 1, 1).to(x.device)
@@ -46,27 +50,40 @@ class CAMA(nn.Module):
 
         # z ~ q(z_k | x, y_c, m)
         # TODO: implement more than one sample of z and take average
-        z_k, q_z = self.encoder.qz(x_rep, y_rep, m, return_prob=True)
+        z_k, log_q_z = self.encoder.qz(x_rep, y_rep, m, return_log_prob=True)
 
         # Estimate p(y|x)
         # Reconstruction probability p(x | y_c, z_k, m)
-        p_x = 0.5 * ((self.decoder(y_rep, z_k, m) - x_rep)
-                     ** 2).sum(dim=(-1, -2, -3)).reshape((-1, 1))
+        x_rec = self.decoder(y_rep, z_k, m)
+        # Treat x_rec as mean of p(x|) ~ N(x_rec, 1)
+        p = torch.distributions.Normal(x_rec, torch.ones_like(x_rec))
+        # Diagonal covariance matrix so joint is product of marginals
+        log_p_x = p.log_prob(x_rep).type(torch.float64).sum(
+            # Sum over [C, H, W]
+            axis=(-1, -2, -3)
+        ).reshape((-1, 1))
 
-        # Uniform prior class probability p(y_c)
-        p_y = (torch.ones((x_rep.shape[0], 1)) * (1 / self.dim_y)).to(x.device)
+        # Uniform prior class probability p(y_c) = 1/num_classes
+        log_p_y = (
+            torch.ones((x_rep.shape[0], 1)).type(torch.float64) *
+            (-torch.log(torch.tensor(self.dim_y).type(torch.float64)))
+        ).to(x.device)
 
         # Prior probability p(z_k):
         # Diagonal covariance matrix so joint is product of marginals
-        p_z = torch.exp(self.encoder.qz.std_normal.log_prob(
-            z_k).sum(-1, keepdim=True))
+        log_p_z = self.encoder.qz.std_normal.log_prob(
+            z_k.type(torch.float64)
+        ).sum(-1, keepdim=True)
 
         # Pre-softmax class posterior probability
         # -> [p(y=1|x_1), p(y=1|x_2), ...]
-        y_pred_flat = p_x * p_y * p_z / q_z
+        pre_softmax_flat = log_p_x + log_p_y + log_p_z - log_q_z
 
-        y_pred = y_pred_flat.reshape((self.dim_y, x.shape[0])).transpose(0, 1)
+        pre_softmax_transposed = pre_softmax_flat.reshape(
+            (self.dim_y, x.shape[0])
+        )
+        pre_softmax = pre_softmax_transposed.transpose(0, 1)
 
-        y_pred = F.softmax(y_pred, dim=-1)
+        y_pred = F.softmax(pre_softmax, dim=-1)
 
         return y_pred

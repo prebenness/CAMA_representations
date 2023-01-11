@@ -15,14 +15,16 @@ def get_data():
     samples
     '''
 
-    def perturb(x):
+    def transform(x, perturb=False):
         '''
-        Defines manipulations to apply to image
+        Transforms and manipulations to apply to images
         '''
         x = torchvision.transforms.ToTensor()(x)  # Pixels to range [0, 1]
-        x = torchvision.transforms.RandomAffine(
-            degrees=0, translate=(cfg.HOR_SHIFT, cfg.VER_SHIFT)
-        )(x)
+        if perturb:
+            x = torchvision.transforms.RandomAffine(
+                degrees=0, translate=(cfg.HOR_SHIFT, cfg.VER_SHIFT)
+            )(x)
+
         return x
 
     if cfg.DATASET == 'mnist':
@@ -37,15 +39,23 @@ def get_data():
             must be either "mnist", "cifar10", or "cifar100"')
 
     # Load datasets
-    train_dataset = getter(os.path.join('data'), transform=perturb,
-                           download=True, train=True)
-    test_dataset = getter(os.path.join('data'), transform=perturb,
-                          download=True, train=False)
+    train_dataset = getter(
+        os.path.join('data'), transform=lambda x: transform(x, perturb=False),
+        download=True, train=True
+    )
+    test_dataset = getter(
+        os.path.join('data'), transform=lambda x: transform(x, perturb=False),
+        download=True, train=False
+    )
 
-    train_dataset_pert = getter(os.path.join('data'), transform=perturb,
-                                download=True, train=True)
-    test_dataset_pert = getter(os.path.join('data'), transform=perturb,
-                               download=True, train=False)
+    train_dataset_pert = getter(
+        os.path.join('data'), transform=lambda x: transform(x, perturb=True),
+        download=True, train=True
+    )
+    test_dataset_pert = getter(
+        os.path.join('data'), transform=lambda x: transform(x, perturb=True),
+        download=True, train=False
+    )
 
     # Compute and store stats
     mean, std = comp_stats(train_dataset)

@@ -40,7 +40,7 @@ class QZ(nn.Module):
         # Keep track of KL divergence between q(z|x,y,m)||p(z)
         self.kl = 0
 
-    def forward(self, x, y, m, return_prob=False):
+    def forward(self, x, y, m, return_log_prob=False):
         # Conv network
         x = self.conv(x)
 
@@ -68,15 +68,15 @@ class QZ(nn.Module):
             1 / 2
         ).sum()
 
-        if return_prob:
+        if return_log_prob:
             # Return z and q(z|)
             z_std = (z - mu) / sigma
             # Diagonal covariance matrix so joint is product of marginals
-            prob = torch.exp(self.std_normal.log_prob(
-                z_std).type(torch.float64).sum(-1, keepdim=True))
+            log_prob = self.std_normal.log_prob(
+                z_std).type(torch.float64).sum(-1, keepdim=True)
 
-            assert torch.all(prob != 0)
+            assert torch.all(torch.isfinite(log_prob))
 
-            return z, prob
+            return z, log_prob
         else:
             return z

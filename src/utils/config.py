@@ -10,7 +10,7 @@ DEBUG = False
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 NUM_WORKERS = 8
 # Data perturbations to apply
-HOR_SHIFT = 0.0
+HOR_SHIFT = 0.5
 VER_SHIFT = 0.0
 
 # Dataset specific
