@@ -2,6 +2,7 @@
 Parse cmd line args, type check and override relevant default config values
 '''
 import argparse
+import os
 
 import src.utils.config as cfg
 
@@ -27,6 +28,13 @@ def pos_float(f):
         raise ValueError('Value must be positive float')
 
     return f
+
+
+def file_path(s):
+    if os.path.isfile(s):
+        return s
+    else:
+        raise FileNotFoundError(f'File {s} not found')
 
 
 def update_config(args):
@@ -95,6 +103,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int)
 
     # Eval args
+    parser.add_argument('--trained_model', type=file_path)
 
     # Representation args
 
