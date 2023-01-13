@@ -43,13 +43,13 @@ def update_config(args):
     elif args.dataset == 'cifar10':
         cfg.DATASET = 'cifar10'
         cfg.DIM_Y = 10
-        cfg.DIM_Z = 64
-        cfg.DIM_M = 32
+        cfg.DIM_Z = 128
+        cfg.DIM_M = 64
         cfg.OUT_SHAPE = (3, 32, 32)
     elif args.dataset == 'cifar100':
         cfg.DIM_Y = 100
-        cfg.DIM_Z = 64
-        cfg.DIM_M = 32
+        cfg.DIM_Z = 128
+        cfg.DIM_M = 64
         cfg.OUT_SHAPE = (3, 32, 32)
 
     # Overwrite defaults if cmd args given

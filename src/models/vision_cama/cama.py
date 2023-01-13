@@ -2,28 +2,26 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from src.models.single_modality.decoder.decoder import Decoder
-from src.models.single_modality.encoder.variational_encoder import VariationalEncoder
+from src.models.vision_cama.decoder.decoder import Decoder
+from src.models.vision_cama.encoder.variational_encoder import VariationalEncoder
+import src.utils.config as cfg
 
 
 class CAMA(nn.Module):
-    def __init__(self, dim_y, dim_z, dim_m, out_shape=(1, 28, 28), device='cuda'):
+    def __init__(self, dim_y, dim_z, dim_m):
         super(CAMA, self).__init__()
-
-        self.device = device
-
-        # Out shape
-        self.out_shape = out_shape
 
         # Set dimensions of hidden state representations
         self.dim_y = dim_y
         self.dim_z = dim_z
         self.dim_m = dim_m
 
-        self.encoder = VariationalEncoder(dim_y=self.dim_y, dim_z=self.dim_z,
-                                          dim_m=self.dim_m, in_shape=self.out_shape, device=self.device)
-        self.decoder = Decoder(dim_y=self.dim_y, dim_z=self.dim_z, dim_m=self.dim_m,
-                               out_shape=self.out_shape)
+        self.encoder = VariationalEncoder(
+            dim_y=self.dim_y, dim_z=self.dim_z, dim_m=self.dim_m,
+        )
+        self.decoder = Decoder(
+            dim_y=self.dim_y, dim_z=self.dim_z, dim_m=self.dim_m,
+        )
 
     def forward(self, x, y, infer_m=False):
         m, z = self.encoder(x, y, infer_m=infer_m)
@@ -39,9 +37,9 @@ class CAMA(nn.Module):
         '''
         # Copy x to get all possible class assignments for each sample
         # -> [x_1, x_2, ..., x_128, x_1, x_2, ...]
-        x_rep = x.repeat(self.dim_y, 1, 1, 1).to(x.device)
+        x_rep = x.repeat(self.dim_y, 1, 1, 1).to(cfg.DEVICE)
         y_rep = torch.diag(torch.ones(self.dim_y)).to(
-            x.device)  # -> [y=1, y=2, ...]
+            cfg.DEVICE)  # -> [y=1, y=2, ...]
         # -> [y=1, y=1, ..., y=2, y=2, ...]
         y_rep = y_rep.repeat_interleave(x.shape[0], dim=0)
 
@@ -67,7 +65,7 @@ class CAMA(nn.Module):
         log_p_y = (
             torch.ones((x_rep.shape[0], 1)).type(torch.float64) *
             (-torch.log(torch.tensor(self.dim_y).type(torch.float64)))
-        ).to(x.device)
+        ).to(cfg.DEVICE)
 
         # Prior probability p(z_k):
         # Diagonal covariance matrix so joint is product of marginals

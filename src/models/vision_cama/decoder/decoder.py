@@ -4,22 +4,28 @@ and label y
 '''
 
 from torch import nn
-from src.models.single_modality.decoder.py import PY
-from src.models.single_modality.decoder.pz import PZ
-from src.models.single_modality.decoder.pm import PM
-from src.models.single_modality.decoder.p_merge import PMerge
+from src.models.vision_cama.decoder.py import PYMNIST, PYCIFAR
+from src.models.vision_cama.decoder.pz import PZMNIST, PZCIFAR
+from src.models.vision_cama.decoder.pm import PMMNIST, PMCIFAR
+from src.models.vision_cama.decoder.p_merge import PMergeMNIST, PMergeCIFAR
+import src.utils.config as cfg
 
 
 class Decoder(nn.Module):
-    def __init__(self, dim_y, dim_z, dim_m, out_shape):
+    def __init__(self, dim_y, dim_z, dim_m):
         super(Decoder, self).__init__()
-
-        self.out_shape = out_shape
 
         # Set dimensions of hidden state representations
         self.dim_y = dim_y
         self.dim_z = dim_z
         self.dim_m = dim_m
+
+        if cfg.DATASET == 'mnist':
+            PY, PZ, PM, PMerge = PYMNIST, PZMNIST, PMMNIST, PMergeMNIST
+        elif cfg.DATASET in ['cifar10', 'cifar100']:
+            PY, PZ, PM, PMerge = PYCIFAR, PZCIFAR, PMCIFAR, PMergeCIFAR
+        else:
+            raise NotImplementedError(f'Dataset {cfg.DATASET} not supported')
 
         # Embedding networks
         self.py = PY(dim_y=self.dim_y)

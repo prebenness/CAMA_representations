@@ -7,7 +7,6 @@ import torch
 import torch.nn.functional as F
 
 import src.utils.config as cfg
-from src.utils.data import standardise
 
 
 def eval_model(model, data, verbose=True):
@@ -20,7 +19,7 @@ def eval_model(model, data, verbose=True):
         h_max = 0
         num_samples, xe_loss, num_correct = 0, 0, 0
         for x, y in data:
-            x = standardise(x).to(cfg.DEVICE)
+            x = x.to(cfg.DEVICE)
             y = y.to(cfg.DEVICE)
             y = F.one_hot(y, num_classes=cfg.DIM_Y).type(torch.float32)
 

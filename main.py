@@ -1,7 +1,7 @@
 '''
 Main entry point of program
 '''
-from src.models.single_modality.cama import CAMA
+from src.models.vision_cama.cama import CAMA
 from src.scripts.train import train_model
 from src.scripts.eval_performance import eval_model
 from src.utils.argparser import parse_args
@@ -17,8 +17,9 @@ def main():
     args = parse_args()
 
     # Define model
-    model_class = CAMA(dim_y=cfg.DIM_Y, dim_z=cfg.DIM_Z,
-                       dim_m=cfg.DIM_M, out_shape=cfg.OUT_SHAPE).to(cfg.DEVICE)
+    model_class = CAMA(
+        dim_y=cfg.DIM_Y, dim_z=cfg.DIM_Z, dim_m=cfg.DIM_M
+    ).to(cfg.DEVICE)
 
     if args.mode == 'train':
         train_loader, test_loader, train_loader_pert, \

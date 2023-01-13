@@ -9,7 +9,7 @@ import torchvision
 import src.utils.config as cfg
 
 
-def get_data():
+def get_data(compute_stats=False):
     '''
     Get a given supported dataset and return both clean and perturbed data
     samples
@@ -58,10 +58,10 @@ def get_data():
     )
 
     # Compute and store stats
-    mean, std = comp_stats(train_dataset)
-
-    cfg.MEAN = mean
-    cfg.STD = std
+    if compute_stats:
+        mean, std = comp_stats(train_dataset)
+        cfg.MEAN = mean
+        cfg.STD = std
 
     # Create PyTorch DataLoaders
     train_loader = torch.utils.data.DataLoader(
