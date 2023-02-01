@@ -5,3 +5,5 @@ toy_vae/
   model.py
 data/
   ----> datasets go here
+
+# Train
