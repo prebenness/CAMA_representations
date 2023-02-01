@@ -3,6 +3,7 @@ Parse cmd line args, type check and override relevant default config values
 '''
 import argparse
 import os
+from datetime import datetime
 
 import src.utils.config as cfg
 
@@ -71,6 +72,25 @@ def update_config(args):
     cfg.NUM_EPOCHS = args.num_epochs or cfg.NUM_EPOCHS
     cfg.BATCH_SIZE = args.batch_size or cfg.BATCH_SIZE
 
+    # Make results dir if needed
+    if args.trained_model:
+        out_dir = os.path.join(args.trained_model.split(os.path.sep)[:-2])
+    else:
+        name_list = [
+            args.exp_name, f'epochs={cfg.NUM_EPOCHS}', f'{cfg.DATASET}',
+            datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        ]
+
+        if cfg.DEBUG:
+            name_list = ['DEBUG'] + name_list
+
+        name = '_'.join(name_list)
+
+        out_dir = os.path.join('results', name)
+        os.makedirs(out_dir, exist_ok=True)
+
+    cfg.OUT_DIR = out_dir
+
 
 def parse_args():
     '''
@@ -95,6 +115,7 @@ def parse_args():
     parser.add_argument('-hor', '--hor_shift', type=percentage)
     parser.add_argument('-ver', '--ver_shift', type=percentage)
     parser.add_argument('--debug', action='store_true', default=False)
+    parser.add_argument('--exp_name', '-n', type=str, default='test')
 
     # Train args
     parser.add_argument('-b', '--beta', type=pos_float)

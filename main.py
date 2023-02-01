@@ -22,12 +22,18 @@ def main():
         dim_y=cfg.DIM_Y, dim_z=cfg.DIM_Z, dim_m=cfg.DIM_M
     ).to(cfg.DEVICE)
 
-    train_loader, test_loader, train_loader_pert, \
+    train_loader, val_loader, test_loader, train_loader_pert, val_loader_pert,\
         test_loader_pert = get_data()
 
     if args.mode == 'train':
-        model = train_model(model, train_loader, train_loader_pert)
-        save_model(model, name='test')
+        model = train_model(model, train_loader, val_loader, train_loader_pert,
+                            val_loader_pert)
+        save_model(model, tag='final')
+
+        print('Evaluating on clean test dataset:')
+        eval_model(model, test_loader, verbose=True)
+        print('Evaluating model on perturbed test data')
+        eval_model(model, test_loader_pert, verbose=True)
 
     elif args.mode == 'finetune':
         model = load_model(model, args.trained_model)

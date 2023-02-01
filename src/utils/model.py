@@ -2,31 +2,24 @@
 Utility functions for storing and loading trained PyTorch models
 '''
 import os
-from datetime import datetime
 
 import torch
 
 import src.utils.config as cfg
 
 
-def save_model(model, name='model', results_dir=os.path.join('results')):
+def save_model(model, tag='model'):
     '''
     Save model with name and unique timestamp
     '''
 
-    name_list = [name, f'epochs={cfg.NUM_EPOCHS}', f'{cfg.DATASET}']
-
-    if cfg.DEBUG:
-        name_list = ['DEBUG'] + name_list
-
-    name_list += [datetime.now().strftime('%Y-%m-%d_%H-%M-%S')]
-
-    model_name = '_'.join(name_list)
-
-    out_path = os.path.join(results_dir, model_name, 'trained')
+    out_path = os.path.join(cfg.OUT_DIR, 'models')
     os.makedirs(out_path, exist_ok=True)
-
-    torch.save(model.state_dict(), os.path.join(out_path, 'model.pt'))
+    torch.save(
+        model.state_dict(), os.path.join(
+            out_path, f'{tag}_model.pt'
+        )
+    )
 
 
 def load_model(model, path):

@@ -4,6 +4,7 @@ Functions for data loading, cleaning, transforming
 import os
 
 import torch
+from torch.utils.data import random_split
 import torchvision
 
 import src.utils.config as cfg
@@ -14,18 +15,6 @@ def get_data(compute_stats=False):
     Get a given supported dataset and return both clean and perturbed data
     samples
     '''
-
-    def transform(x, perturb=False):
-        '''
-        Transforms and manipulations to apply to images
-        '''
-        x = torchvision.transforms.ToTensor()(x)  # Pixels to range [0, 1]
-        if perturb:
-            x = torchvision.transforms.RandomAffine(
-                degrees=0, translate=(cfg.HOR_SHIFT, cfg.VER_SHIFT)
-            )(x)
-
-        return x
 
     if cfg.DATASET == 'mnist':
         getter = torchvision.datasets.MNIST
@@ -39,23 +28,34 @@ def get_data(compute_stats=False):
             must be either "mnist", "cifar10", or "cifar100"')
 
     # Load datasets
-    train_dataset = getter(
-        os.path.join('data'), transform=lambda x: transform(x, perturb=False),
-        download=True, train=True
-    )
-    test_dataset = getter(
-        os.path.join('data'), transform=lambda x: transform(x, perturb=False),
-        download=True, train=False
-    )
+    def transform(x, perturb=False):
+        '''
+        Transforms and manipulations to apply to images
+        '''
+        x = torchvision.transforms.ToTensor()(x)  # Pixels to range [0, 1]
+        if perturb:
+            x = torchvision.transforms.RandomAffine(
+                degrees=0, translate=(cfg.HOR_SHIFT, cfg.VER_SHIFT)
+            )(x)
 
-    train_dataset_pert = getter(
-        os.path.join('data'), transform=lambda x: transform(x, perturb=True),
-        download=True, train=True
-    )
-    test_dataset_pert = getter(
-        os.path.join('data'), transform=lambda x: transform(x, perturb=True),
-        download=True, train=False
-    )
+        return x
+
+    def dataset_factory(train=True, perturb=True):
+        return getter(
+            os.path.join('data'),
+            transform=lambda x: transform(x, perturb=perturb), download=True,
+            train=train
+        )
+
+    train_dataset = dataset_factory(train=True, perturb=False)
+    test_dataset = dataset_factory(train=False, perturb=False)
+    train_dataset_pert = dataset_factory(train=True, perturb=True)
+    test_dataset_pert = dataset_factory(train=False, perturb=True)
+
+    # Train val split:
+    train_dataset, val_dataset = random_split(train_dataset, [4/5, 1/5])
+    train_dataset_pert, val_dataset_pert = random_split(
+        train_dataset_pert, [4/5, 1/5])
 
     # Compute and store stats
     if compute_stats:
@@ -64,25 +64,23 @@ def get_data(compute_stats=False):
         cfg.STD = std
 
     # Create PyTorch DataLoaders
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True,
-        num_workers=cfg.NUM_WORKERS
-    )
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True,
-        num_workers=cfg.NUM_WORKERS
-    )
+    def dataloader_factory(dataset):
+        return torch.utils.data.DataLoader(
+            dataset, batch_size=cfg.BATCH_SIZE, shuffle=True,
+            num_workers=cfg.NUM_WORKERS,
+        )
 
-    train_loader_pert = torch.utils.data.DataLoader(
-        train_dataset_pert, batch_size=cfg.BATCH_SIZE, shuffle=True,
-        num_workers=cfg.NUM_WORKERS
-    )
-    test_loader_pert = torch.utils.data.DataLoader(
-        test_dataset_pert, batch_size=cfg.BATCH_SIZE, shuffle=True,
-        num_workers=cfg.NUM_WORKERS
-    )
+    train_loader = dataloader_factory(train_dataset)
+    val_loader = dataloader_factory(val_dataset)
+    test_loader = dataloader_factory(test_dataset)
 
-    return train_loader, test_loader, train_loader_pert, test_loader_pert
+    train_loader_pert = dataloader_factory(train_dataset_pert)
+    val_loader_pert = dataloader_factory(val_dataset_pert)
+    test_loader_pert = dataloader_factory(test_dataset_pert)
+
+    # Return loaders for train, val, test, for clean, pert data
+    return train_loader, val_loader, test_loader, train_loader_pert, \
+        val_loader_pert, test_loader_pert
 
 
 def comp_stats(dataset):
