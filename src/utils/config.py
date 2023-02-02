@@ -23,7 +23,7 @@ MEAN = None
 STD = None
 
 # Training
-NUM_EPOCHS = 50
+NUM_EPOCHS = 250
 BATCH_SIZE = 128
 BETA = 1.0
 LAMBDA = 0.7
