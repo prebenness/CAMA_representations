@@ -14,11 +14,11 @@ HOR_SHIFT = 0.5
 VER_SHIFT = 0.0
 
 # Dataset specific
-DATASET = 'mnist'
-OUT_SHAPE = (1, 28, 28)
-DIM_Y = 10
-DIM_Z = 64
-DIM_M = 32
+DATASET = ''
+OUT_SHAPE = ()
+DIM_Y = None
+DIM_Z = None
+DIM_M = None
 MEAN = None
 STD = None
 

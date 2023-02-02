@@ -22,7 +22,7 @@ def compute_representations(model, train_loader, test_loader, model_path):
         for idx, (x, y) in enumerate(loader):
 
             x, y = x.to(cfg.DEVICE), y.to(cfg.DEVICE)
-            y = F.one_hot(y).type(torch.float32)
+            y = F.one_hot(y, num_classes=cfg.DIM_Y).type(torch.float32)
 
             with torch.no_grad():
                 m = model.encoder.qm(x)

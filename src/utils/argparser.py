@@ -43,6 +43,8 @@ def update_config(args):
     Lets cmd line args override default values for global config variables
     '''
     # Set dataset variables
+    cfg.DATASET = args.dataset
+
     if args.dataset == 'mnist':
         cfg.DATASET = 'mnist'
         cfg.DIM_Y = 10

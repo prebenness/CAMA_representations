@@ -46,11 +46,15 @@ def train_model(model, train_loader, val_loader,
             # Format data and send to GPU
             x_clean = x_clean.to(cfg.DEVICE)
             y_clean = y_clean.to(cfg.DEVICE)
-            y_clean = F.one_hot(y_clean).type(torch.float32)
+            y_clean = F.one_hot(
+                y_clean, num_classes=cfg.DIM_Y
+            ).type(torch.float32)
 
             x_pert = x_pert.to(cfg.DEVICE)
             y_pert = y_pert.to(cfg.DEVICE)
-            y_pert = F.one_hot(y_pert).type(torch.float32)
+            y_pert = F.one_hot(
+                y_pert, num_classes=cfg.DIM_Y
+            ).type(torch.float32)
 
             # Zero gradient
             opt.zero_grad()
