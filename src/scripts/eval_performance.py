@@ -97,7 +97,7 @@ def eval_robust(model_path, model, test_loader):
 
         # Craft adversarial samples
         attack = torchattacks.PGD(
-            wrapped_model, eps=8/255, alpha=1/255, steps=10, random_start=True
+            wrapped_model, eps=8/255, alpha=4/255, steps=40, random_start=True
         )
         x_adv = attack(x, y)
         y_pred_adv = wrapped_model(x_adv)
