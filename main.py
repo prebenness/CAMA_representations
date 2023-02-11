@@ -5,7 +5,7 @@ import os
 
 from src.models.vision_cama.cama import CAMA
 from src.scripts.train import train_model
-from src.scripts.eval_performance import eval_model
+from src.scripts.eval_performance import eval_model, eval_robust
 from src.scripts.representations import compute_representations
 from src.utils.argparser import parse_args
 from src.utils.data import get_data
@@ -49,9 +49,11 @@ def main():
         )
 
         with open(os.path.join(cfg.OUT_DIR, 'test_results.txt'), 'w') as w:
-            w.write(f'Test results on modle {args.trained_model}\n')
+            w.write(f'Test results on model {args.trained_model}\n')
             w.write(f'Clean test data - XE: {xe} NCE: {nce} Acc.: {acc}\n')
             w.write(f'Pert. test data - XE: {xe_pert} NCE: {nce_pert} Acc.:{acc_pert}\n')
+    elif args.mode == 'eval':
+        eval_robust(args.trained_model, model, test_loader)
 
     elif args.mode == 'repr':
         model = load_model(model, args.trained_model)

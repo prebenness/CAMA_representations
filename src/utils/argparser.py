@@ -109,7 +109,7 @@ def parse_args():
 
     # General args
     parser.add_argument(
-        '-m', '--mode', choices=['train', 'finetune', 'test', 'repr'],
+        '-m', '--mode', choices=['train', 'finetune', 'eval', 'repr'],
         required=True
     )
     parser.add_argument(
