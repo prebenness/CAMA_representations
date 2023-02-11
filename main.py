@@ -1,6 +1,8 @@
 '''
 Main entry point of program
 '''
+import os
+
 from src.models.vision_cama.cama import CAMA
 from src.scripts.train import train_model
 from src.scripts.eval_performance import eval_model
@@ -40,7 +42,16 @@ def main():
         eval_model(model, test_loader)
 
     elif args.mode == 'test':
-        ...
+        model = load_model(model, args.trained_model)
+        xe, nce, acc = eval_model(model, test_loader, verbose=True)
+        xe_pert, nce_pert, acc_pert = eval_model(
+            model, test_loader_pert, verbose=True
+        )
+
+        with open(os.path.join(cfg.OUT_DIR, 'test_results.txt'), 'w') as w:
+            w.write(f'Test results on modle {args.trained_model}\n')
+            w.write(f'Clean test data - XE: {xe} NCE: {nce} Acc.: {acc}\n')
+            w.write(f'Pert. test data - XE: {xe_pert} NCE: {nce_pert} Acc.:{acc_pert}\n')
 
     elif args.mode == 'repr':
         model = load_model(model, args.trained_model)

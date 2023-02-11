@@ -10,7 +10,7 @@ DEBUG = False
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 NUM_WORKERS = 8
 # Data perturbations to apply
-HOR_SHIFT = 0.5
+HOR_SHIFT = 0.2
 VER_SHIFT = 0.0
 
 # Dataset specific
@@ -25,7 +25,7 @@ STD = None
 # Training
 NUM_EPOCHS = 250
 BATCH_SIZE = 128
-BETA = 1.0
-LAMBDA = 0.7
+BETA = 0.5              # Scale KL-divergence up or down
+LAMBDA = 0.85           # Scale contribution of clean vs perturbed data
 
 # Eval
