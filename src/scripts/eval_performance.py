@@ -2,11 +2,15 @@
 Scripts for evaluating trained models
 '''
 
+import os
+
 import torchmetrics.functional as F_metrics
 import torch
 import torch.nn.functional as F
+import torchattacks
 
 import src.utils.config as cfg
+from src.utils.model import load_model
 
 
 def eval_model(model, data, verbose=True):
@@ -62,3 +66,55 @@ def eval_model(model, data, verbose=True):
         )
 
     return mean_xe, nce, mean_acc
+
+
+def eval_robust(model_path, model, test_loader):
+    '''
+    Evaluate accuracy under PGD-40 attack
+    '''
+
+    class Wrapper(torch.nn.Module):
+        def __init__(self, model):
+            super().__init__()
+            self.model = model
+
+        def forward(self, x):
+            return self.model.predict(x)
+
+    num_corr, num_corr_adv, num_tot = 0, 0, 0
+    for (x, y) in test_loader:
+        x = x.to(cfg.DEVICE)
+        y = y.to(cfg.DEVICE)
+
+        # Load model
+        model = load_model(model, model_path)
+        wrapped_model = Wrapper(model).to(cfg.DEVICE)
+
+        # Get clean predictions
+        y_pred = wrapped_model(x)
+        num_corr += (y_pred.argmax(dim=1) == y).sum().item()
+        num_tot += y.shape[0]
+
+        # Craft adversarial samples
+        attack = torchattacks.PGD(
+            wrapped_model, eps=8/255, alpha=1/255, steps=10, random_start=True
+        )
+        x_adv = attack(x, y)
+        y_pred_adv = wrapped_model(x_adv)
+
+        num_corr_adv += (y_pred_adv.argmax(dim=1) == y).sum().item()
+
+        print(f'Processed {num_tot:5d} of {len(test_loader.dataset):5d} samples, current tally: Clean acc: {num_corr / num_tot:4.3f} Adv acc: {num_corr_adv / num_tot:4.3f}')
+
+    # Compute and store results
+    clean_acc = num_corr / num_tot
+    adv_acc = num_corr_adv / num_tot
+
+    res_text = f'Test completed: Clean acc: {clean_acc} Adv acc: {adv_acc}'
+
+    model_dir, model_file = os.path.split(model_path)
+    log_file_name = '.'.join([model_file.split('.')[0], 'txt'])
+    with open(os.path.join(model_dir, log_file_name), 'w') as w:
+        w.write(res_text)
+
+    print(res_text)

@@ -76,7 +76,7 @@ def update_config(args):
 
     # Make results dir if needed
     if args.trained_model:
-        out_dir = os.path.join(args.trained_model.split(os.path.sep)[:-2])
+        out_dir = os.path.join(*args.trained_model.split(os.path.sep)[:-2])
     else:
         name_list = [
             args.exp_name, f'epochs={cfg.NUM_EPOCHS}', f'{cfg.DATASET}',
@@ -107,7 +107,7 @@ def parse_args():
 
     # General args
     parser.add_argument(
-        '-m', '--mode', choices=['train', 'finetune', 'test', 'repr'],
+        '-m', '--mode', choices=['train', 'finetune', 'eval', 'repr'],
         required=True
     )
     parser.add_argument(

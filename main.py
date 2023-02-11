@@ -3,7 +3,7 @@ Main entry point of program
 '''
 from src.models.vision_cama.cama import CAMA
 from src.scripts.train import train_model
-from src.scripts.eval_performance import eval_model
+from src.scripts.eval_performance import eval_model, eval_robust
 from src.scripts.representations import compute_representations
 from src.utils.argparser import parse_args
 from src.utils.data import get_data
@@ -39,8 +39,8 @@ def main():
         model = load_model(model, args.trained_model)
         eval_model(model, test_loader)
 
-    elif args.mode == 'test':
-        ...
+    elif args.mode == 'eval':
+        eval_robust(args.trained_model, model, test_loader)
 
     elif args.mode == 'repr':
         model = load_model(model, args.trained_model)
