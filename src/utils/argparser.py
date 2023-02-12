@@ -69,7 +69,6 @@ def update_config(args):
     cfg.DEBUG = args.debug or cfg.DEBUG
     cfg.NUM_WORKERS = args.num_workers or cfg.NUM_WORKERS
 
-
     # Train args
     cfg.BETA = args.beta or cfg.BETA
     cfg.LAMBDA = args.lambda_ or cfg.LAMBDA
@@ -109,7 +108,7 @@ def parse_args():
 
     # General args
     parser.add_argument(
-        '-m', '--mode', choices=['train', 'finetune', 'eval', 'repr'],
+        '-m', '--mode', choices=['train', 'finetune', 'test', 'eval', 'repr'],
         required=True
     )
     parser.add_argument(

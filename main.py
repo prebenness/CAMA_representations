@@ -48,7 +48,11 @@ def main():
             model, test_loader_pert, verbose=True
         )
 
-        with open(os.path.join(cfg.OUT_DIR, 'test_results.txt'), 'w') as w:
+        out_dir, model_name = os.path.split(args.trained_model)
+        log_file = os.path.join(
+            out_dir, f'{model_name.split(".")[0]}-test_log.txt')
+
+        with open(os.path.join(log_file), 'w') as w:
             w.write(f'Test results on model {args.trained_model}\n')
             w.write(f'Clean test data - XE: {xe} NCE: {nce} Acc.: {acc}\n')
             w.write(
