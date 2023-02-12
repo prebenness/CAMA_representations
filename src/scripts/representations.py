@@ -9,8 +9,10 @@ import src.utils.config as cfg
 
 def compute_representations(model, train_loader, test_loader, model_path):
     # Create output directory
-    model_dir = os.path.split(model_path)[0]
-    outpath = os.path.join(model_dir, 'representations')
+    model_dir, model_name = os.path.split(model_path)
+    outpath = os.path.join(
+        model_dir, f'{model_name.split(".")[0]}-representations'
+    )
     os.makedirs(outpath, exist_ok=True)
 
     split_dict = {'train': train_loader, 'test': test_loader}

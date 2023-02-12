@@ -113,7 +113,7 @@ def eval_robust(model_path, model, test_loader):
     res_text = f'Test completed: Clean acc: {clean_acc} Adv acc: {adv_acc}'
 
     model_dir, model_file = os.path.split(model_path)
-    log_file_name = '.'.join([model_file.split('.')[0], 'txt'])
+    log_file_name = f'{model_file.split(".")[0]}-robust_log.txt'
     with open(os.path.join(model_dir, log_file_name), 'w') as w:
         w.write(res_text)
 
