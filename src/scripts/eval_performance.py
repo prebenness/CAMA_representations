@@ -70,7 +70,7 @@ def eval_model(model, data, verbose=True):
 
 def eval_robust(model_path, model, test_loader):
     '''
-    Evaluate accuracy under PGD-40 attack
+    Call robustness evaluations and store results in logs
     '''
 
     class Wrapper(torch.nn.Module):
@@ -81,28 +81,81 @@ def eval_robust(model_path, model, test_loader):
         def forward(self, x):
             return self.model.predict(x)
 
+    # Load and wrap model
+    _model = load_model(model, model_path)
+    model = Wrapper(_model).to(cfg.DEVICE)
+
+    res_text = test_robustness(model, test_loader)
+
+    model_dir, model_file = os.path.split(model_path)
+    log_file_name = f'{model_file.split(".")[0]}-robust_log.txt'
+    with open(os.path.join(model_dir, log_file_name), 'w') as w:
+        w.write(res_text)
+
+
+def test_robustness(model, data_loader):
+    '''
+    Test adversarial robustness under different attacks
+    '''
+
+    class DummyAttack():
+        def __init__(self, m):
+            ...
+
+        def set_normalization_used(self, mean, std):
+            ...
+
+        def __call__(self, x, y):
+            return x
+
+    attack_factories = {
+        'dummy_attacker': DummyAttack,
+        'pgd20_linf': lambda m: torchattacks.PGD(m, eps=8/255, alpha=2/255, steps=20, random_start=True),
+        'pgd40_linf': lambda m: torchattacks.PGD(m, eps=8/255, alpha=4/255, steps=40, random_start=True),
+        'pgd20_l2': lambda m: torchattacks.PGDL2(m, eps=1.0, alpha=0.2, steps=20, random_start=True),
+        'pgd40_l2': lambda m: torchattacks.PGDL2(m, eps=1.0, alpha=0.2, steps=40, random_start=True),
+        'fgsm_linf': lambda m: torchattacks.FGSM(m, eps=8/255),
+        'cw20_l2': lambda m: torchattacks.CW(m, c=1, kappa=0, steps=20),
+        'cw40_l2': lambda m: torchattacks.CW(m, c=1, kappa=0, steps=20),
+    }
+
+    results = {}
+    for attack_name, attack_factory in attack_factories.items():
+        print(f'Testing on {attack_name}')
+        clean_acc, adv_acc = test_attack(
+            model, attack_factory=attack_factory, test_loader=data_loader
+        )
+        results[attack_name] = (clean_acc, adv_acc)
+
+    res_text = '\n'.join(
+        [f'{attack_name} clean acc: {v[0]:10.8f} adv acc: {v[1]:10.8f}' for attack_name,
+            v in results.items()]
+    )
+
+    print(res_text)
+    return res_text
+
+
+def test_attack(model, attack_factory, test_loader):
+    '''
+    Test adversarial robustness for single attack
+    '''
     num_corr, num_corr_adv, num_tot = 0, 0, 0
     for (x, y) in test_loader:
         x = x.to(cfg.DEVICE)
         y = y.to(cfg.DEVICE)
 
-        # Load model
-        model = load_model(model, model_path)
-        wrapped_model = Wrapper(model).to(cfg.DEVICE)
-
-        # Get clean predictions
-        y_pred = wrapped_model(x)
-        num_corr += (y_pred.argmax(dim=1) == y).sum().item()
-        num_tot += y.shape[0]
+        # Get clean test preds
+        y_pred = model(x)
 
         # Craft adversarial samples
-        attack = torchattacks.PGD(
-            wrapped_model, eps=8/255, alpha=4/255, steps=40, random_start=True
-        )
-        x_adv = attack(x, y)
-        y_pred_adv = wrapped_model(x_adv)
+        attacker = attack_factory(model)
+        x_adv = attacker(x, y)
+        y_pred_adv = model(x_adv)
 
+        num_corr += (y_pred.argmax(dim=1) == y).sum().item()
         num_corr_adv += (y_pred_adv.argmax(dim=1) == y).sum().item()
+        num_tot += y.shape[0]
 
         print(f'Processed {num_tot:5d} of {len(test_loader.dataset):5d} samples, current tally: Clean acc: {num_corr / num_tot:4.3f} Adv acc: {num_corr_adv / num_tot:4.3f}')
 
@@ -111,10 +164,6 @@ def eval_robust(model_path, model, test_loader):
     adv_acc = num_corr_adv / num_tot
 
     res_text = f'Test completed: Clean acc: {clean_acc} Adv acc: {adv_acc}'
-
-    model_dir, model_file = os.path.split(model_path)
-    log_file_name = f'{model_file.split(".")[0]}-robust_log.txt'
-    with open(os.path.join(model_dir, log_file_name), 'w') as w:
-        w.write(res_text)
-
     print(res_text)
+
+    return clean_acc, adv_acc
