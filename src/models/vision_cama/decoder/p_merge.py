@@ -6,6 +6,7 @@ and attempts to reconstruct the input x
 import torch
 from torch import nn
 import torch.nn.functional as F
+from torchsummary import summary
 
 
 class PMergeMNIST(nn.Module):
@@ -113,3 +114,102 @@ class PMergeCIFAR(nn.Module):
         x = torch.sigmoid(self.deconv4(x))
 
         return x
+
+
+class PMergeIMAGENET(nn.Module):
+    '''
+    Projection MLP: [3000, 8*8*64], followed by 4 deconvolution networks
+    with stride 2 and kernel (ideally) 3
+    '''
+
+    def __init__(self):
+        super().__init__()
+
+        # 1500 + 1500 + 1500 -> 128*4*4
+        self.linear = nn.Linear(in_features=4500, out_features=128*4*4)
+
+        self.deconv1 = nn.Sequential(
+            # 128,4,4 -> 128,9,9
+            nn.ConvTranspose2d(
+                in_channels=64, out_channels=128, kernel_size=3, stride=2,
+                padding=0
+            ),
+            nn.ReLU(),
+        )
+
+        self.deconv2 = nn.Sequential(
+            # 128,9,9 -> 128,17,17
+            nn.ConvTranspose2d(
+                in_channels=128, out_channels=128, kernel_size=3, stride=2,
+                padding=1
+            ),
+            nn.ReLU(),
+        )
+
+        self.deconv3 = nn.Sequential(
+            # 128,17,17 -> 128,15,15
+            nn.ConvTranspose2d(
+                in_channels=128, out_channels=128, kernel_size=3, stride=1,
+                padding=2
+            ),
+            nn.ReLU(),
+            # 128,15,15 -> 128,30,30
+            nn.Upsample(scale_factor=2),
+        )
+
+        self.deconv4 = nn.Sequential(
+            # 128,30,30 -> 128,57,57
+            nn.ConvTranspose2d(
+                in_channels=128, out_channels=128, kernel_size=3, stride=2,
+                padding=2
+            ),
+            nn.ReLU(),
+        )
+
+        self.deconv5 = nn.Sequential(
+            # 128,57,57 -> 128,111,111
+            nn.ConvTranspose2d(
+                in_channels=128, out_channels=128, kernel_size=3, stride=2,
+                padding=2
+            ),
+            nn.ReLU(),
+            # 128,111,111 -> 128,222,222
+            nn.Upsample(scale_factor=2),
+        )
+
+        # No non-linearity on final layer
+        # 128,222,222 -> 3,224,224
+        self.deconv_final = nn.ConvTranspose2d(
+            in_channels=128, out_channels=3, kernel_size=3, stride=1,
+            padding=0
+        )
+
+    def forward(self, y, z, m):
+        # Concat representations
+        x = torch.concat((y, z, m), dim=-1)
+
+        # Projection
+        x = self.linear(F.relu(x))
+
+        # Reshape to 3D tensor
+        x = x.reshape((-1, 64, 4, 4))
+
+        # Deconv layers
+        x = self.deconv1(x)
+        x = self.deconv2(x)
+        x = self.deconv3(x)
+        x = self.deconv4(x)
+        x = self.deconv5(x)
+
+        x = torch.sigmoid(self.deconv_final(x))
+
+        return x
+
+
+def test():
+    m = PMergeIMAGENET().to('cuda')
+    summary(model=m, input_size=[(1500,), (1500,), (1500,)])
+
+
+if __name__ == '__main__':
+    test()

@@ -18,14 +18,20 @@ def get_data(compute_stats=False):
 
     if cfg.DATASET == 'mnist':
         getter = torchvision.datasets.MNIST
+    elif cfg.DATASET == 'emnist_balanced':
+        getter = lambda *args, **kwargs: torchvision.datasets.EMNIST(
+            *args, split='balanced', **kwargs
+        )
     elif cfg.DATASET == 'cifar10':
         getter = torchvision.datasets.CIFAR10
     elif cfg.DATASET == 'cifar100':
         getter = torchvision.datasets.CIFAR100
+    elif cfg.DATASET == 'imagenet':
+        getter = torchvision.datasets.ImageNet
     else:
         raise NotImplementedError(
             f'Dataset {cfg.DATASET} not supported, \
-            must be either "mnist", "cifar10", or "cifar100"')
+            must be in {[*cfg.DATASET_CONFIGS.keys()]}')
 
     # Load datasets
     def transform(x, perturb=False):
@@ -33,6 +39,7 @@ def get_data(compute_stats=False):
         Transforms and manipulations to apply to images
         '''
         x = torchvision.transforms.ToTensor()(x)  # Pixels to range [0, 1]
+        x = torchvision.transforms.RandomCrop(size=(cfg.OUT_SHAPE[1:]))
         if perturb:
             x = torchvision.transforms.RandomAffine(
                 degrees=0, translate=(cfg.HOR_SHIFT, cfg.VER_SHIFT)

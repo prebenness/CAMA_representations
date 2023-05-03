@@ -46,3 +46,28 @@ class PYCIFAR(nn.Module):
         y = F.relu(self.linear2(y))
 
         return y
+
+
+class PYIMAGENET(nn.Module):
+    '''
+    MLP with layer dims: [dim_y, 1500, 1500, 1500]
+    Relu activations
+    '''
+
+    def __init__(self, dim_y):
+        super().__init__()
+
+        self.dim_y = dim_y
+
+        h_dim = 1500
+
+        self.linear1 = nn.Linear(in_features=self.dim_y, out_features=h_dim)
+        self.linear2 = nn.Linear(in_features=h_dim, out_features=h_dim),
+        self.linear3 = nn.Linear(in_features=h_dim, out_features=h_dim)
+
+    def forward(self, y):
+        y = F.relu(self.linear1(y))
+        y = F.relu(self.linear2(y))
+        y = F.relu(self.linear3(y))
+
+        return y

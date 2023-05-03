@@ -4,10 +4,10 @@ and label y
 '''
 
 from torch import nn
-from src.models.vision_cama.decoder.py import PYMNIST, PYCIFAR
-from src.models.vision_cama.decoder.pz import PZMNIST, PZCIFAR
-from src.models.vision_cama.decoder.pm import PMMNIST, PMCIFAR
-from src.models.vision_cama.decoder.p_merge import PMergeMNIST, PMergeCIFAR
+from src.models.vision_cama.decoder.py import PYMNIST, PYCIFAR, PYIMAGENET
+from src.models.vision_cama.decoder.pz import PZMNIST, PZCIFAR, PZIMAGENET
+from src.models.vision_cama.decoder.pm import PMMNIST, PMCIFAR, PMIMAGENET
+from src.models.vision_cama.decoder.p_merge import PMergeMNIST, PMergeCIFAR, PMergeIMAGENET
 import src.utils.config as cfg
 
 
@@ -20,10 +20,12 @@ class Decoder(nn.Module):
         self.dim_z = dim_z
         self.dim_m = dim_m
 
-        if cfg.DATASET == 'mnist':
+        if cfg.DATASET in ['mnist', 'emnist_balanced']:
             PY, PZ, PM, PMerge = PYMNIST, PZMNIST, PMMNIST, PMergeMNIST
         elif cfg.DATASET in ['cifar10', 'cifar100']:
             PY, PZ, PM, PMerge = PYCIFAR, PZCIFAR, PMCIFAR, PMergeCIFAR
+        elif cfg.DATASET == 'imagenet':
+            PY, PZ, PM, PMerge = PYIMAGENET, PZIMAGENET, PMIMAGENET, PMergeIMAGENET
         else:
             raise NotImplementedError(f'Dataset {cfg.DATASET} not supported')
 

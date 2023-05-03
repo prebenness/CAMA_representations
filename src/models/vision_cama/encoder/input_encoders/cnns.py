@@ -4,6 +4,7 @@ CNNs as used in the standard CAMA architecture
 import torch
 from torch import nn
 import torch.nn.functional as F
+from torchsummary import summary
 
 
 class CNNMNIST(nn.Module):
@@ -70,7 +71,7 @@ class CNNCIFAR(nn.Module):
         super(CNNCIFAR, self).__init__()
 
         # Conv layers
-        # (1, 32, 32) -> (64, 32, 32)
+        # (3, 32, 32) -> (64, 32, 32)
         self.conv1 = nn.Conv2d(
             in_channels=3, out_channels=64, kernel_size=3, padding=1
         )
@@ -104,6 +105,65 @@ class CNNCIFAR(nn.Module):
         return x
 
 
+class CNNIMAGENET(nn.Module):
+    def __init__(self):
+        super(CNNIMAGENET, self).__init__()
+
+        # Conv layers
+        # (3, 224, 224) -> (128, 224, 224)
+        self.conv1 = nn.Conv2d(
+            in_channels=3, out_channels=128, kernel_size=3, padding=1
+        )
+        # (128, 224, 224) -> (128, 112, 112)
+        self.pool1 = nn.MaxPool2d(kernel_size=2)
+
+        # (128, 112, 112) -> (128, 112, 112)
+        self.conv2 = nn.Conv2d(
+            in_channels=128, out_channels=128, kernel_size=3, padding=1
+        )
+        # (128, 112, 112) -> (128, 56, 56)
+        self.pool2 = nn.MaxPool2d(kernel_size=2)
+
+        # (128, 56, 56) -> (128, 56, 56)
+        self.conv3 = nn.Conv2d(
+            in_channels=128, out_channels=128, kernel_size=3, padding=1
+        )
+        # (128, 56, 56) -> (128, 28, 28)
+        self.pool3 = nn.MaxPool2d(kernel_size=2)
+
+        # (128, 28, 28) -> (128, 28, 28)
+        self.conv4 = nn.Conv2d(
+            in_channels=128, out_channels=128, kernel_size=3, padding=1
+        )
+        # (128, 28, 28) -> (128, 14, 14)
+        self.pool4 = nn.MaxPool2d(kernel_size=2)
+
+        # (128, 14, 14) -> (64, 16, 16)
+        self.conv5 = nn.Conv2d(
+            in_channels=128, out_channels=64, kernel_size=3, padding=2
+        )
+        # (64, 16, 16) -> (64, 8, 8)
+        self.pool5 = nn.MaxPool2d(kernel_size=2)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = self.pool1(x)
+
+        x = F.relu(self.conv2(x))
+        x = self.pool2(x)
+
+        x = F.relu(self.conv3(x))
+        x = self.pool3(x)
+
+        x = F.relu(self.conv4(x))
+        x = self.pool4(x)
+
+        x = F.relu(self.conv5(x))
+        x = self.pool5(x)
+
+        return x
+
+
 def test():
     '''
     Check that all configurations result in output of shape (-1, 64, 4, 4)
@@ -111,12 +171,26 @@ def test():
 
     batch_size = 128
 
-    x_mnist = torch.rand((batch_size, 1, 28, 28))
-    x_cifar = torch.rand((batch_size, 1, 32, 32))
+    x_mnist = torch.rand((batch_size, 1, 28, 28)).to('cuda')
+    x_cifar = torch.rand((batch_size, 3, 32, 32)).to('cuda')
+    x_imagenet = torch.rand((batch_size, 3, 224, 224)).to('cuda')
 
-    m1 = CNNMNIST(kernel_size=3)
-    m2 = CNNMNIST(kernel_size=5)
-    m3 = CNNCIFAR()
+    m1 = CNNMNIST(kernel_size=3).to('cuda')
+    m2 = CNNMNIST(kernel_size=5).to('cuda')
+    m3 = CNNCIFAR().to('cuda')
+    m4 = CNNIMAGENET().to('cuda')
+
+    print('MNIST KERNEL=3 #################')
+    summary(model=m1, input_size=(1, 28, 28))
+
+    print('MNIST KERNEL=5 #################')
+    summary(model=m2, input_size=(1, 28, 28))
+
+    print('CIFAR ##########################')
+    summary(model=m3, input_size=(3, 32, 32))
+
+    print('IMAGENET #########################')
+    summary(model=m4, input_size=(3, 224, 224))
 
     h_x_mnist_1 = m1(x_mnist)
     assert h_x_mnist_1.shape == (batch_size, 64, 4, 4)
@@ -124,6 +198,8 @@ def test():
     assert h_x_mnist_2.shape == (batch_size, 64, 4, 4)
     h_x_cifar = m3(x_cifar)
     assert h_x_cifar.shape == (batch_size, 64, 4, 4)
+    h_x_imagenet = m4(x_imagenet)
+    assert h_x_imagenet.shape == (batch_size, 64, 8, 8)
 
     print('All tests completed successfully')
 

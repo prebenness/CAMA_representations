@@ -45,23 +45,11 @@ def update_config(args):
     # Set dataset variables
     cfg.DATASET = args.dataset
 
-    if args.dataset == 'mnist':
-        cfg.DATASET = 'mnist'
-        cfg.DIM_Y = 10
-        cfg.DIM_Z = 64
-        cfg.DIM_M = 32
-        cfg.OUT_SHAPE = (1, 28, 28)
-    elif args.dataset == 'cifar10':
-        cfg.DATASET = 'cifar10'
-        cfg.DIM_Y = 10
-        cfg.DIM_Z = 128
-        cfg.DIM_M = 64
-        cfg.OUT_SHAPE = (3, 32, 32)
-    elif args.dataset == 'cifar100':
-        cfg.DIM_Y = 100
-        cfg.DIM_Z = 128
-        cfg.DIM_M = 64
-        cfg.OUT_SHAPE = (3, 32, 32)
+    dataset_config = cfg.DATASET_CONFIGS[cfg.DATASET]
+    cfg.OUT_SHAPE = dataset_config['out_shape']
+    cfg.DIM_Y = dataset_config['dim_y']
+    cfg.DIM_Z = dataset_config['dim_z']
+    cfg.DIM_M = dataset_config['dim_m']
 
     # Overwrite defaults if cmd args given
     cfg.HOR_SHIFT = args.hor_shift or cfg.HOR_SHIFT
@@ -112,7 +100,7 @@ def parse_args():
         required=True
     )
     parser.add_argument(
-        '-d', '--dataset', choices=['mnist', 'cifar10', 'cifar100'],
+        '-d', '--dataset', choices=[*cfg.DATASET_CONFIGS.keys()],
         required=True
     )
     parser.add_argument('-hor', '--hor_shift', type=percentage)
