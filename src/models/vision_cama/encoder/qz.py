@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import src.utils.config as cfg
 from src.models.vision_cama.encoder.input_encoders.cnns import\
     CNNMNIST, CNNCIFAR, CNNIMAGENET
 
@@ -30,8 +31,9 @@ class QZMNIST(nn.Module):
 
         # Distribution for reparam trick
         self.std_normal = torch.distributions.Normal(0, 1)
-        self.std_normal.loc = self.std_normal.loc.cuda()
-        self.std_normal.scale = self.std_normal.scale.cuda()
+        if cfg.DEVICE == 'cuda':
+            self.std_normal.loc = self.std_normal.loc.cuda()
+            self.std_normal.scale = self.std_normal.scale.cuda()
 
         # Keep track of KL divergence between q(z|x,y,m)||p(z)
         self.kl = 0
@@ -101,8 +103,9 @@ class QZCIFAR(nn.Module):
 
         # Distribution for reparam trick
         self.std_normal = torch.distributions.Normal(0, 1)
-        self.std_normal.loc = self.std_normal.loc.cuda()
-        self.std_normal.scale = self.std_normal.scale.cuda()
+        if cfg.DEVICE == 'cuda':
+            self.std_normal.loc = self.std_normal.loc.cuda()
+            self.std_normal.scale = self.std_normal.scale.cuda()
 
         # Keep track of KL divergence between q(z|x,y,m)||p(z)
         self.kl = 0
@@ -172,8 +175,9 @@ class QZIMAGENET(nn.Module):
 
         # Distribution for reparam trick
         self.std_normal = torch.distributions.Normal(0, 1)
-        self.std_normal.loc = self.std_normal.loc.cuda()
-        self.std_normal.scale = self.std_normal.scale.cuda()
+        if cfg.DEVICE == 'cuda':
+            self.std_normal.loc = self.std_normal.loc.cuda()
+            self.std_normal.scale = self.std_normal.scale.cuda()
 
         # Keep track of KL divergence between q(z|x,y,m)||p(z)
         self.kl = 0

@@ -55,6 +55,7 @@ def update_config(args):
     cfg.HOR_SHIFT = args.hor_shift or cfg.HOR_SHIFT
     cfg.VER_SHIFT = args.ver_shift or cfg.VER_SHIFT
     cfg.DEBUG = args.debug or cfg.DEBUG
+    cfg.DEVICE = 'cpu' if args.cpu else cfg.DEVICE
     cfg.NUM_WORKERS = args.num_workers or cfg.NUM_WORKERS
 
     # Train args
@@ -106,6 +107,7 @@ def parse_args():
     parser.add_argument('-hor', '--hor_shift', type=percentage)
     parser.add_argument('-ver', '--ver_shift', type=percentage)
     parser.add_argument('--debug', action='store_true', default=False)
+    parser.add_argument('--cpu', action='store_true', default=False)
     parser.add_argument('--exp_name', '-n', type=str, default='test')
     parser.add_argument('--num_workers', type=int, default=8)
 

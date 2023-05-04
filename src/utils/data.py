@@ -39,7 +39,7 @@ def get_data(compute_stats=False):
         Transforms and manipulations to apply to images
         '''
         x = torchvision.transforms.ToTensor()(x)  # Pixels to range [0, 1]
-        x = torchvision.transforms.RandomCrop(size=(cfg.OUT_SHAPE[1:]))
+        x = torchvision.transforms.RandomCrop(size=(cfg.OUT_SHAPE[1:]))(x)
         if perturb:
             x = torchvision.transforms.RandomAffine(
                 degrees=0, translate=(cfg.HOR_SHIFT, cfg.VER_SHIFT)
