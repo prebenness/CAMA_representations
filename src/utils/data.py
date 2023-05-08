@@ -10,6 +10,62 @@ import torchvision
 import src.utils.config as cfg
 
 
+def country211_getter(*args, train=True, **kwargs):
+    '''
+    Wrapper function for the Country-211 dataset, emulates 
+    behaviour of other dataset getters
+    '''
+    if train:
+        train_split = torchvision.datasets.Country211(
+            *args, split='train', **kwargs
+        )
+        val_split = torchvision.datasets.Country211(
+            *args, split='valid', **kwargs
+        )
+        dataset = torch.utils.data.ConcatDataset([train_split, val_split])
+    else:
+        dataset = torchvision.datasets.Country211(
+            *args, split='test', **kwargs
+        )
+
+    return dataset
+
+
+def pcam_getter(*args, train=True, ** kwargs):
+    '''
+    Wrapper function for the PCAM dataset, emulates 
+    behaviour of other dataset getters
+    '''
+    if train:
+        train_split = torchvision.datasets.PCAM(
+            *args, split='train', **kwargs
+        )
+        val_split = torchvision.datasets.PCAM(
+            *args, split='val', **kwargs
+        )
+        dataset = torch.utils.data.ConcatDataset([train_split, val_split])
+    else:
+        dataset = torchvision.datasets.PCAM(
+            *args, split='test', **kwargs
+        )
+
+    return dataset
+
+
+class RGBGrayscaleTransform:
+    '''
+    Enforce RGB on all images
+    '''
+
+    def __call__(self, tensor):
+        if tensor.size(0) == 3:
+            return tensor
+        elif tensor.size(0) == 1:
+            tensor = tensor.repeat(3, 1, 1)
+        else:
+            raise ValueError('Tensor shape not supported.')
+
+
 def get_data(compute_stats=False):
     '''
     Get a given supported dataset and return both clean and perturbed data
@@ -22,12 +78,18 @@ def get_data(compute_stats=False):
         getter = lambda *args, **kwargs: torchvision.datasets.EMNIST(
             *args, split='balanced', **kwargs
         )
+    elif cfg.DATASET == 'fashion_mnist':
+        getter = torchvision.datasets.FashionMNIST
     elif cfg.DATASET == 'cifar10':
         getter = torchvision.datasets.CIFAR10
     elif cfg.DATASET == 'cifar100':
         getter = torchvision.datasets.CIFAR100
+    elif cfg.DATASET == 'pcam':
+        getter = pcam_getter
     elif cfg.DATASET == 'imagenet':
         getter = torchvision.datasets.ImageNet
+    elif cfg.DATASET == 'country211':
+        getter = country211_getter
     else:
         raise NotImplementedError(
             f'Dataset {cfg.DATASET} not supported, \
@@ -39,7 +101,12 @@ def get_data(compute_stats=False):
         Transforms and manipulations to apply to images
         '''
         x = torchvision.transforms.ToTensor()(x)  # Pixels to range [0, 1]
-        x = torchvision.transforms.RandomCrop(size=(cfg.OUT_SHAPE[1:]))(x)
+
+        if cfg.OUT_SHAPE[0] == 3:
+            x = RGBGrayscaleTransform()(x)
+
+        x = torchvision.transforms.Resize(size=(cfg.OUT_SHAPE[1:]))(x)
+        x = torchvision.transforms.CenterCrop(size=(cfg.OUT_SHAPE[1:]))(x)
         if perturb:
             x = torchvision.transforms.RandomAffine(
                 degrees=0, translate=(cfg.HOR_SHIFT, cfg.VER_SHIFT)
@@ -49,7 +116,7 @@ def get_data(compute_stats=False):
 
     def dataset_factory(train=True, perturb=True):
         return getter(
-            os.path.join('data'),
+            root=os.path.join('data'),
             transform=lambda x: transform(x, perturb=perturb), download=True,
             train=train
         )

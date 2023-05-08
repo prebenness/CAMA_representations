@@ -4,10 +4,10 @@ and label y
 '''
 
 from torch import nn
-from src.models.vision_cama.decoder.py import PYMNIST, PYCIFAR, PYIMAGENET
-from src.models.vision_cama.decoder.pz import PZMNIST, PZCIFAR, PZIMAGENET
-from src.models.vision_cama.decoder.pm import PMMNIST, PMCIFAR, PMIMAGENET
-from src.models.vision_cama.decoder.p_merge import PMergeMNIST, PMergeCIFAR, PMergeIMAGENET
+from src.models.vision_cama.decoder.py import PYMNIST, PYCIFAR, PYIMAGENET, PYMedium
+from src.models.vision_cama.decoder.pz import PZMNIST, PZCIFAR, PZIMAGENET, PZMedium
+from src.models.vision_cama.decoder.pm import PMMNIST, PMCIFAR, PMIMAGENET, PMMedium
+from src.models.vision_cama.decoder.p_merge import PMergeMNIST, PMergeCIFAR, PMergeIMAGENET, PMergeMedium
 import src.utils.config as cfg
 
 
@@ -20,12 +20,14 @@ class Decoder(nn.Module):
         self.dim_z = dim_z
         self.dim_m = dim_m
 
-        if cfg.DATASET in ['mnist', 'emnist_balanced']:
+        if cfg.DATASET in ['mnist', 'emnist_balanced', 'fashion_mnist']:
             PY, PZ, PM, PMerge = PYMNIST, PZMNIST, PMMNIST, PMergeMNIST
         elif cfg.DATASET in ['cifar10', 'cifar100']:
             PY, PZ, PM, PMerge = PYCIFAR, PZCIFAR, PMCIFAR, PMergeCIFAR
-        elif cfg.DATASET == 'imagenet':
+        elif cfg.DATASET in ['imagenet', 'country211']:
             PY, PZ, PM, PMerge = PYIMAGENET, PZIMAGENET, PMIMAGENET, PMergeIMAGENET
+        elif cfg.DATASET == 'pcam':
+            PY, PZ, PM, PMerge = PYMedium, PZMedium, PMMedium, PMergeMedium
         else:
             raise NotImplementedError(f'Dataset {cfg.DATASET} not supported')
 
