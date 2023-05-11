@@ -34,6 +34,7 @@ def train_model(model, train_loader, val_loader,
     '''
     opt = torch.optim.Adam(model.parameters())
 
+    print(f'Starting model training on dataset {cfg.DATASET}')
     for epoch in range(cfg.NUM_EPOCHS if not cfg.DEBUG else 1):
 
         # Track losses and metrics
@@ -42,12 +43,13 @@ def train_model(model, train_loader, val_loader,
         tot_rec_loss_clean, tot_kl_loss_clean, \
             tot_rec_loss_pert, tot_kl_loss_pert = 0, 0, 0, 0
 
-        for (x_clean, y_clean), (x_pert, y_pert) in zip(train_loader, train_loader_pert):
+        for (x_clean, y_clean_), (x_pert, y_pert) in zip(train_loader, train_loader_pert):
+
             # Format data and send to GPU
             x_clean = x_clean.to(cfg.DEVICE)
-            y_clean = y_clean.to(cfg.DEVICE)
+            y_clean_ = y_clean_.to(cfg.DEVICE)
             y_clean = F.one_hot(
-                y_clean, num_classes=cfg.DIM_Y
+                y_clean_, num_classes=cfg.DIM_Y
             ).type(torch.float32)
 
             x_pert = x_pert.to(cfg.DEVICE)

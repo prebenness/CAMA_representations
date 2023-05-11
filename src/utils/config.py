@@ -36,6 +36,12 @@ DATASET_CONFIGS = {
         'dim_z': 128,
         'dim_m': 64
     },
+    'fashion_mnist': {
+        'out_shape': (1, 28, 28),
+        'dim_y': 10,
+        'dim_z': 64,
+        'dim_m': 32,
+    },
     'cifar10': {
         'out_shape': (3, 32, 32),
         'dim_y': 10,
@@ -54,6 +60,18 @@ DATASET_CONFIGS = {
         'dim_z': 256,
         'dim_m': 128,
     },
+    'country211': {
+        'out_shape': (3, 224, 224),
+        'dim_y': 211,
+        'dim_z': 256,
+        'dim_m': 128,
+    },
+    'pcam': {
+        'out_shape': (3, 96, 96),
+        'dim_y': 2,
+        'dim_z': 128,
+        'dim_m': 64
+    }
 }
 
 # Training

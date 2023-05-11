@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
 
-from src.models.vision_cama.encoder.qm import QMMNIST, QMCIFAR, QMIMAGENET
-from src.models.vision_cama.encoder.qz import QZMNIST, QZCIFAR, QZIMAGENET
+from src.models.vision_cama.encoder.qm import QMMNIST, QMCIFAR, QMIMAGENET,\
+    QMMedium
+from src.models.vision_cama.encoder.qz import QZMNIST, QZCIFAR, QZIMAGENET,\
+    QZMedium
 
 import src.utils.config as cfg
 
@@ -17,12 +19,14 @@ class VariationalEncoder(nn.Module):
         self.dim_m = dim_m
 
         # Instantiate encoder distributions
-        if cfg.DATASET in ['mnist', 'emnist_balanced']:
+        if cfg.DATASET in ['mnist', 'emnist_balanced', 'fashion_mnist']:
             QM, QZ = QMMNIST, QZMNIST
         elif cfg.DATASET in ['cifar10', 'cifar100']:
             QM, QZ = QMCIFAR, QZCIFAR
-        elif cfg.DATASET == 'imagenet':
+        elif cfg.DATASET in ['imagenet', 'country211']:
             QM, QZ = QMIMAGENET, QZIMAGENET
+        elif cfg.DATASET == 'pcam':
+            QM, QZ = QMMedium, QZMedium
         else:
             raise NotImplementedError(f'Dataset {cfg.DATASET} not supported')
 
